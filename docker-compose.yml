@@ -1,0 +1,39 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: minimal-api-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: minimal_api
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./Api/scripts/create_database.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - minimal-api-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+ 
+  mininal-api:
+    image: ${DOCKER_REGISTRY-}mininalapi
+    build:
+      context: .
+      dockerfile: Api/Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - minimal-api-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  minimal-api-network:
+    driver: bridge
